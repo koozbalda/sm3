@@ -17,14 +17,14 @@ session_start();
  */
 function forName($name)
 {
-    $code='utf-8';
+    $code = 'utf-8';
     $name = trim($name);
     $arr = explode(' ', $name);
     if (count($arr) > 1) {
         $_SESSION['error']['login'] = "Поле Имя введено неверно. Допустимо только одно слово";
         return false;
     }
-if (mb_strlen($name,$code) < 3 || mb_strlen($name,$code) > 15) {
+    if (mb_strlen($name, $code) < 3 || mb_strlen($name, $code) > 15) {
         $_SESSION['error']['login'] = "Поле Имя введено неверно, длинна должна быть больше 3х символов и менее 15";
         return false;
     }
@@ -42,6 +42,10 @@ if (mb_strlen($name,$code) < 3 || mb_strlen($name,$code) > 15) {
 }
 
 
+/**
+ * @param $email
+ * @return bool
+ */
 function forEmail($email)
 {
     $email = trim($email);
@@ -63,16 +67,23 @@ function forEmail($email)
 
 
     $arr = explode('@', $email);
-    if (count($arr) > 1) {
-        return true;
 
+    if (count($arr) <= 1) {
+        $_SESSION['error']['email'] = "Поле email должно содержать @";
+        return false;
+
+    }elseif(count($arr) !=2 ) {
+        $_SESSION['error']['email'] = "Поле email заполнено не верно";
+        return false;
     }
-
-
-    return false;
+    return true;
 
 }
 
+/**
+ * @param $tel
+ * @return bool
+ */
 function forTel($tel)
 {
     if (mb_strlen($tel) < 5) {
@@ -81,18 +92,33 @@ function forTel($tel)
     }
 
     for ($i = 0; $i < mb_strlen($tel); $i++) {
+//        var_dump($i);
+//        echo' - ';
+//        var_dump(mb_strlen($tel));
+//        echo'<br>';
+//        var_dump($tel[$i]);
+//        echo'<br>';
         if (!is_numeric($tel[$i])) {
             $_SESSION['error']['tel'] = "Допускаются только цифры";
             return false;
         }
     }
-
     return true;
 }
 
 
-function pswd($pswd, $pswd2)
+/**
+ * @param $pswd
+ * @return bool
+ */
+function pswd($pswd)
 {
+    if(empty($_POST['password2'])){
+        $_SESSION['error']['password'] = "Поле пароль2 не заданно";
+        return false;
+    }else{
+        $pswd2=$_POST['password2'];
+    }
     //8 и более символов
     if (mb_strlen($pswd) < 7) {
         $_SESSION['error']['password'] = "Поле пароль должно содержать не менее 8 символов ";
@@ -105,48 +131,38 @@ function pswd($pswd, $pswd2)
     }
     // без пробелов
     $arr = explode(' ', $pswd);
-    if (count($arr) != 1)
-    {
+    if (count($arr) != 1) {
         $_SESSION['error']['password'] = "Пробелы запрещены";
         return false;
     }
     return true;
 }
 
+//Function from send correct data or error message in session
+function session_prepared($index,$bool){
+    if (!empty($_POST[$index]) && $bool) {
+        $_SESSION[$index] = $_POST[$index];
+        unset($_SESSION['error'][$index]);
+    } else {
+        unset($_SESSION[$index]);
+    }
+
+}
+
 
 //part 1 check name
-if (!empty($_POST['login']) && forName($_POST['login'])) {
-    $_SESSION['login'] = $_POST['login'];
-    unset($_SESSION['error']['login']);
-} else {
-    unset($_SESSION['login']);
-}
-
+session_prepared('login',forName($_POST['login']));
 
 //part 2 check email
-if (!empty($_POST['email']) && forEmail($_POST['email'])) {
-    $_SESSION['email'] = $_POST['email'];
-    unset($_SESSION['error']['email']);
-} else {
-    unset($_SESSION['email']);
-}
+session_prepared('email',forEmail($_POST['email']));
 
 //part 3 check tel
-if (!empty($_POST['tel']) && forTel($_POST['tel'])) {
-    $_SESSION['tel'] = $_POST['tel'];
-    unset($_SESSION['error']['tel']);
-} else {
-    unset($_SESSION['tel']);
-}
+session_prepared('tel',forTel($_POST['tel']));
 
 //part 4 check pswd
-if (!empty($_POST['password']) && (!empty($_POST['password2'])) && pswd($_POST['password'], $_POST['password2'])) {
-    $_SESSION['password'] = $_POST['password'];
-    unset($_SESSION['error']['password']);
-} else {
-    unset($_SESSION['password']);
-}
+session_prepared('tel',pswd($_POST['password']));
 
+//if no error, we save email and login in session
 if (count($_SESSION['error']) == 0) {
     $_SESSION['registered']['email'][] = $_SESSION['email'];
     $_SESSION['registered']['login'][] = $_SESSION['login'];
@@ -157,11 +173,11 @@ header('Location: /index.php');
 exit();
 ?>
 
-<br>
-<br>
-<br>
-<br>
-<a href="index.php">back</a>>
+<!--<br>-->
+<!--<br>-->
+<!--<br>-->
+<!--<br>-->
+<!--<a href="index.php">back</a>>-->
 
 
 
